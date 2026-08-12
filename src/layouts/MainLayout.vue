@@ -33,6 +33,11 @@
             </router-link>
           </li>
           <li class="nav-item">
+            <router-link class="nav-link" :class="{ active: ruta === 'personas' }" to="/configuracion/personas">
+              <i class="bi bi-person-vcard"></i>Personas
+            </router-link>
+          </li>
+          <li class="nav-item">
             <router-link class="nav-link" :class="{ active: ruta === 'empleados' }" to="/configuracion/empleados">
               <i class="bi bi-people"></i>Empleados
             </router-link>
@@ -50,6 +55,11 @@
           <li class="nav-item">
             <router-link class="nav-link" :class="{ active: ruta === 'conceptos' }" to="/configuracion/conceptos">
               <i class="bi bi-tags"></i>Conceptos
+            </router-link>
+          </li>
+          <li class="nav-item">
+            <router-link class="nav-link" :class="{ active: ruta === 'descuentos-empleados' }" to="/configuracion/descuentos-empleados">
+              <i class="bi bi-person-lines-fill"></i>Descuentos Empleados
             </router-link>
           </li>
           <li class="nav-item mt-3">

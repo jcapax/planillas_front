@@ -51,14 +51,14 @@
               <tr v-for="(emp, i) in empleados" :key="emp.id">
                 <td>{{ (pagina - 1) * 10 + i + 1 }}</td>
                 <td>
-                  {{ emp.tipoDocumento }} {{ emp.nroDocumento }}
+                  {{ emp.persona.tipoDocumento }} {{ emp.persona.nroDocumento }}
                   <span v-if="emp.origen" class="text-muted small">({{ emp.origen }})</span>
                 </td>
                 <td>{{ nombreCompleto(emp) }}</td>
                 <td>{{ emp.cargo || '-' }}</td>
                 <td>{{ emp.fechaIngreso || '-' }}</td>
                 <td class="text-end">{{ fmtNumero(emp.jornalHora) }}</td>
-                <td>{{ emp.sexo || '-' }}</td>
+                <td>{{ emp.persona.sexo || '-' }}</td>
                 <td class="text-end">
                   <button class="btn btn-sm btn-outline-primary me-1" @click="editar(emp)">
                     <i class="bi bi-pencil"></i>
@@ -104,94 +104,36 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
-            <h6 class="text-primary">Identificación</h6>
+            <h6 class="text-primary">Persona</h6>
             <div class="row g-3 mb-3">
-              <div class="col-md-3">
-                <label class="form-label">Tipo documento</label>
-                <select v-model="form.tipoDocumento" class="form-select">
-                  <option value="CI">CI</option>
-                  <option value="RUN">RUN</option>
-                  <option value="Pasaporte">Pasaporte</option>
-                  <option value="Carnet de Extranjero">Carnet de Extranjero</option>
-                  <option value="Otro">Otro</option>
-                </select>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Número documento *</label>
-                <input v-model="form.nroDocumento" class="form-control" required />
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Origen / Extensión</label>
-                <select v-model="form.origen" class="form-select">
-                  <option value="CH">CH - Chuquisaca</option>
-                  <option value="CB">CB - Cochabamba</option>
-                  <option value="CBBA">CBBA</option>
-                  <option value="LP">LP - La Paz</option>
-                  <option value="PT">PT - Potosí</option>
-                  <option value="PO">PO - Oruro</option>
-                  <option value="">Otro</option>
-                </select>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">NUA/CUA</label>
-                <input v-model="form.nuaCua" class="form-control" />
-              </div>
-            </div>
-
-            <h6 class="text-primary">Datos personales</h6>
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label">Apellido Paterno</label>
-                <input v-model="form.apellidoPaterno" class="form-control" />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Apellido Materno</label>
-                <input v-model="form.apellidoMaterno" class="form-control" />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Apellido de casada</label>
-                <input v-model="form.apellidoCasada" class="form-control" />
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Nombre 1</label>
-                <input v-model="form.nombre1" class="form-control" />
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Otros nombres</label>
-                <input v-model="form.otrosNombres" class="form-control" />
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Fecha de nacimiento</label>
-                <input v-model="form.fechaNacimiento" type="date" class="form-control" />
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Sexo</label>
-                <select v-model="form.sexo" class="form-select">
-                  <option value="">-</option>
-                  <option value="M">Masculino</option>
-                  <option value="F">Femenino</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">País de nacionalidad</label>
-                <input v-model="form.paisNacionalidad" class="form-control" />
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">AFP</label>
-                <select v-model="form.afp" class="form-select">
-                  <option value="Gestora">Gestora</option>
-                  <option value="Previsión">Previsión</option>
-                  <option value="Futuro de Bolivia">Futuro de Bolivia</option>
-                  <option value="">Otra</option>
-                </select>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Jubilado</label>
-                <select v-model="form.jubilado" class="form-select">
-                  <option :value="false">No</option>
-                  <option :value="true">Sí</option>
-                </select>
-              </div>
+              <template v-if="form.id">
+                <div class="col-md-8">
+                  <label class="form-label">Persona asignada</label>
+                  <input :value="nombreCompleto(form)" class="form-control" disabled />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Documento</label>
+                  <input :value="form.persona.tipoDocumento + ' ' + form.persona.nroDocumento" class="form-control" disabled />
+                </div>
+              </template>
+              <template v-else>
+                <div class="col-md-6">
+                  <label class="form-label">Buscar persona</label>
+                  <input v-model="filtroPersona" class="form-control" placeholder="Filtrar por nombre o documento..." />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Persona *</label>
+                  <select v-model="form.personaId" class="form-select" required>
+                    <option :value="null" disabled>-- Seleccionar persona --</option>
+                    <option v-for="per in personasDisponibles" :key="per.id" :value="per.id">
+                      {{ nombreCompleto(per) }} - {{ per.tipoDocumento }} {{ per.nroDocumento }}
+                    </option>
+                  </select>
+                  <small v-if="personasDisponibles.length === 0" class="text-muted">
+                    No hay personas disponibles. Registre primero una persona.
+                  </small>
+                </div>
+              </template>
             </div>
 
             <h6 class="text-primary">Datos laborales</h6>
@@ -212,13 +154,37 @@
                 <label class="form-label">Fecha de seguro</label>
                 <input v-model="form.fechaSeguro" type="date" class="form-control" />
               </div>
-              <div class="col-md-6">
-                <label class="form-label">Dirección</label>
-                <input v-model="form.direccion" class="form-control" />
+              <div class="col-md-3">
+                <label class="form-label">Origen / Extensión</label>
+                <select v-model="form.origen" class="form-select">
+                  <option value="CH">CH - Chuquisaca</option>
+                  <option value="CB">CB - Cochabamba</option>
+                  <option value="CBBA">CBBA</option>
+                  <option value="LP">LP - La Paz</option>
+                  <option value="PT">PT - Potosí</option>
+                  <option value="PO">PO - Oruro</option>
+                  <option value="">Otro</option>
+                </select>
               </div>
               <div class="col-md-3">
-                <label class="form-label">Teléfono</label>
-                <input v-model="form.telefono" class="form-control" />
+                <label class="form-label">NUA/CUA</label>
+                <input v-model="form.nuaCua" class="form-control" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">AFP</label>
+                <select v-model="form.afp" class="form-select">
+                  <option value="Gestora">Gestora</option>
+                  <option value="Previsión">Previsión</option>
+                  <option value="Futuro de Bolivia">Futuro de Bolivia</option>
+                  <option value="">Otra</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Jubilado</label>
+                <select v-model="form.jubilado" class="form-select">
+                  <option :value="false">No</option>
+                  <option :value="true">Sí</option>
+                </select>
               </div>
               <div class="col-md-3">
                 <label class="form-label">Jornal hora (Bs) *</label>
@@ -240,31 +206,24 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { Modal } from 'bootstrap'
 import api, { mensajeError } from '../../services/api'
 
 const empleados = ref([])
+const personasDisponibles = ref([])
 const cargando = ref(false)
 const guardando = ref(false)
 const busqueda = ref('')
+const filtroPersona = ref('')
 const pagina = ref(1)
 const totalPaginas = ref(0)
 const totalElementos = ref(0)
 const alerta = ref(null)
 
-const form = reactive({
+const empleadoVacio = () => ({
   id: null,
-  tipoDocumento: 'CI',
-  nroDocumento: '',
-  apellidoPaterno: '',
-  apellidoMaterno: '',
-  apellidoCasada: '',
-  nombre1: '',
-  otrosNombres: '',
-  fechaNacimiento: '',
-  sexo: '',
-  paisNacionalidad: 'Bolivia',
+  personaId: null,
   afp: 'Gestora',
   nuaCua: '',
   fechaIngreso: '',
@@ -273,9 +232,18 @@ const form = reactive({
   cargo: '',
   clasificacionLaboral: '',
   jubilado: false,
-  direccion: '',
-  telefono: '',
-  jornalHora: 0
+  jornalHora: 0,
+  persona: { tipoDocumento: 'CI', nroDocumento: '' }
+})
+
+const form = reactive(empleadoVacio())
+
+const personasFiltradas = computed(() => {
+  const q = filtroPersona.value.trim().toLowerCase()
+  if (!q) return personasDisponibles.value
+  return personasDisponibles.value.filter((per) =>
+    (nombreCompleto(per) + ' ' + per.tipoDocumento + ' ' + per.nroDocumento).toLowerCase().includes(q)
+  )
 })
 
 let modal = null
@@ -286,10 +254,11 @@ function mostrarAlerta(texto, tipo) {
 }
 
 function nombreCompleto(emp) {
-  return [emp.apellidoPaterno, emp.apellidoMaterno, emp.nombre1, emp.otrosNombres]
+  const p = emp.persona || emp
+  return [p.apellidoPaterno, p.apellidoMaterno, p.apellidoCasada, p.nombres]
     .filter(Boolean)
     .map((x) => x.trim())
-    .join(' ') || emp.nroDocumento
+    .join(' ') || p.nroDocumento
 }
 
 function fmtNumero(v) {
@@ -315,40 +284,32 @@ async function cargar(p) {
   }
 }
 
+async function cargarDisponibles() {
+  try {
+    const { data } = await api.get('/personas/disponibles')
+    personasDisponibles.value = data
+  } catch (e) {
+    mostrarAlerta(mensajeError(e), 'alert-danger')
+  }
+}
+
 function nuevo() {
-  Object.assign(form, {
-    id: null,
-    tipoDocumento: 'CI',
-    nroDocumento: '',
-    apellidoPaterno: '',
-    apellidoMaterno: '',
-    apellidoCasada: '',
-    nombre1: '',
-    otrosNombres: '',
-    fechaNacimiento: '',
-    sexo: '',
-    paisNacionalidad: 'Bolivia',
-    afp: 'Gestora',
-    nuaCua: '',
-    fechaIngreso: '',
-    fechaSeguro: '',
-    origen: 'CH',
-    cargo: '',
-    clasificacionLaboral: '',
-    jubilado: false,
-    direccion: '',
-    telefono: '',
-    jornalHora: 0
-  })
+  Object.assign(form, empleadoVacio())
+  filtroPersona.value = ''
+  cargarDisponibles()
   modal.show()
 }
 
 function editar(emp) {
-  Object.assign(form, emp)
+  Object.assign(form, empleadoVacio(), emp)
   modal.show()
 }
 
 async function guardar() {
+  if (!form.id && !form.personaId) {
+    mostrarAlerta('Seleccione una persona', 'alert-warning')
+    return
+  }
   guardando.value = true
   try {
     if (form.id) {
@@ -380,5 +341,6 @@ async function eliminar(emp) {
 onMounted(() => {
   modal = new Modal(document.getElementById('modalEmpleado'))
   cargar(0)
+  cargarDisponibles()
 })
 </script>

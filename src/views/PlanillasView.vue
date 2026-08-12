@@ -100,13 +100,15 @@
                     <th class="text-end">Dominical</th>
                     <th class="text-end">Total Ganado</th>
                     <th class="text-end">Aportes</th>
-                    <th class="text-end">Descuentos</th>
+                    <th class="text-end">Dctos. Variables</th>
+                    <th class="text-end">Total Descuentos</th>
                     <th class="text-end">Líquido</th>
+                    <th class="text-end">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-if="detalles.length === 0">
-                    <td colspan="10" class="text-center text-muted py-3">
+                    <td colspan="12" class="text-center text-muted py-3">
                       La planilla aún no ha sido generada.
                     </td>
                   </tr>
@@ -119,8 +121,14 @@
                     <td class="text-end">{{ fmt(d.salarioDominical) }}</td>
                     <td class="text-end fw-bold">{{ fmt(d.totalGanado) }}</td>
                     <td class="text-end">{{ fmt(d.totalAportes) }}</td>
+                    <td class="text-end">{{ fmt(d.descuentosVarios) }}</td>
                     <td class="text-end">{{ fmt(d.totalDescuentos) }}</td>
                     <td class="text-end fw-bold">{{ fmt(d.liquidoPagable) }}</td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-outline-warning" @click="abrirDescuentos(d)">
+                        <i class="bi bi-pencil-square me-1"></i>Dctos.
+                      </button>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -129,11 +137,65 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal descuentos variables por empleado -->
+    <div class="modal fade" id="modalDetalleDescuentos" tabindex="-1" data-bs-backdrop="static">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              Descuentos variables: {{ detalleDescuentoEmpleado }}
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted small">
+              Descuentos variables de este empleado para la planilla
+              <strong>{{ detalleActual }}</strong>. Los descuentos fijos se aplican
+              automáticamente a todos los empleados.
+            </p>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Descuento</th>
+                    <th style="width: 180px" class="text-end">Monto (Bs)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="d in detalleDescuentos" :key="d.conceptoId">
+                    <td><code>{{ d.codigo }}</code></td>
+                    <td>{{ d.nombre }}</td>
+                    <td>
+                      <input v-model="d.monto" type="number" step="0.01" min="0" class="form-control form-control-sm text-end" />
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="2" class="text-end fw-bold">Total</td>
+                    <td class="text-end fw-bold">{{ fmt(detalleDescuentosTotal) }}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button class="btn btn-primary" :disabled="guardandoDescuentos" @click="guardarDescuentos">
+              <span v-if="guardandoDescuentos" class="spinner-border spinner-border-sm me-1"></span>
+              Guardar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { Modal } from 'bootstrap'
 import api, { mensajeError } from '../services/api'
 
@@ -147,8 +209,14 @@ const nuevaAnio = ref(new Date().getFullYear())
 const creando = ref(false)
 const alerta = ref(null)
 const detalleActual = ref('')
+const detallePlanillaId = ref(null)
+const detalleSeleccionado = ref(null)
+const detalleDescuentoEmpleado = ref('')
+const detalleDescuentos = ref([])
+const guardandoDescuentos = ref(false)
 
 let modalDetalles = null
+let modalDetalleDescuentos = null
 
 function mostrarAlerta(texto, tipo) {
   alerta.value = { texto, tipo }
@@ -160,9 +228,14 @@ function fmt(v) {
   return Number(v).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+const detalleDescuentosTotal = computed(() =>
+  detalleDescuentos.value.reduce((acc, d) => acc + (Number(d.monto) || 0), 0)
+)
+
 function nombreEmpleado(emp) {
-  return [emp.apellidoPaterno, emp.apellidoMaterno, emp.nombre1, emp.otrosNombres]
-    .filter(Boolean).map((x) => x.trim()).join(' ') || emp.nroDocumento
+  const p = emp.persona || emp
+  return [p.apellidoPaterno, p.apellidoMaterno, p.apellidoCasada, p.nombres]
+    .filter(Boolean).map((x) => x.trim()).join(' ') || p.nroDocumento
 }
 
 async function cargar() {
@@ -202,6 +275,7 @@ async function generar(p) {
 
 async function verDetalles(p) {
   detalleActual.value = p.nombre
+  detallePlanillaId.value = p.id
   try {
     const { data } = await api.get(`/planillas/${p.id}/detalles`)
     detalles.value = data
@@ -209,6 +283,41 @@ async function verDetalles(p) {
     mostrarAlerta(mensajeError(e), 'alert-danger')
   }
   modalDetalles.show()
+}
+
+async function abrirDescuentos(d) {
+  detalleSeleccionado.value = d
+  detalleDescuentoEmpleado.value = d.empleado ? nombreEmpleado(d.empleado) : `Empleado #${d.empleado_id}`
+  try {
+    const { data } = await api.get(`/planillas/detalles/${d.id}/descuentos`)
+    detalleDescuentos.value = data.map((x) => ({ ...x, monto: Number(x.monto) }))
+  } catch (e) {
+    mostrarAlerta(mensajeError(e), 'alert-danger')
+  }
+  modalDetalleDescuentos.show()
+}
+
+async function guardarDescuentos() {
+  const d = detalleSeleccionado.value
+  if (!d) return
+  guardandoDescuentos.value = true
+  try {
+    const payload = detalleDescuentos.value.map((x) => ({
+      conceptoId: x.conceptoId,
+      monto: Number(x.monto) || 0
+    }))
+    await api.put(`/planillas/detalles/${d.id}/descuentos`, payload)
+    modalDetalleDescuentos.hide()
+    mostrarAlerta('Descuentos guardados y totales recalculados', 'alert-success')
+    if (detallePlanillaId.value) {
+      await verDetalles({ id: detallePlanillaId.value, nombre: detalleActual.value })
+    }
+    cargar()
+  } catch (e) {
+    mostrarAlerta(mensajeError(e), 'alert-danger')
+  } finally {
+    guardandoDescuentos.value = false
+  }
 }
 
 async function eliminar(p) {
@@ -224,6 +333,7 @@ async function eliminar(p) {
 
 onMounted(() => {
   modalDetalles = new Modal(document.getElementById('modalDetalles'))
+  modalDetalleDescuentos = new Modal(document.getElementById('modalDetalleDescuentos'))
   cargar()
 })
 </script>

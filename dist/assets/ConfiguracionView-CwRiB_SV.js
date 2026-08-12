@@ -1,1 +1,0 @@
-import{_ as o,c as n,h as r,k as c,o as t}from"./index-Dynb5_3z.js";const s={};function a(_,i){const e=c("router-view");return t(),n("div",null,[r(e)])}const l=o(s,[["render",a]]);export{l as default};

@@ -21,10 +21,12 @@ const routes = [
         children: [
           { path: '', redirect: '/configuracion/empresa' },
           { path: 'empresa', name: 'empresa', component: () => import('../views/config/EmpresaView.vue') },
+          { path: 'personas', name: 'personas', component: () => import('../views/config/PersonasView.vue') },
           { path: 'empleados', name: 'empleados', component: () => import('../views/config/EmpleadosView.vue') },
           { path: 'parametros', name: 'parametros', component: () => import('../views/config/ParametrosView.vue') },
           { path: 'bono-antiguedad', name: 'bono-antiguedad', component: () => import('../views/config/BonoAntiguedadView.vue') },
-          { path: 'conceptos', name: 'conceptos', component: () => import('../views/config/ConceptosView.vue') }
+          { path: 'conceptos', name: 'conceptos', component: () => import('../views/config/ConceptosView.vue') },
+          { path: 'descuentos-empleados', name: 'descuentos-empleados', component: () => import('../views/config/DescuentosEmpleadosView.vue') }
         ]
       },
       { path: 'planillas', name: 'planillas', component: () => import('../views/PlanillasView.vue') }

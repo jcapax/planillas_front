@@ -41,14 +41,16 @@
                 <th>Código</th>
                 <th>Nombre</th>
                 <th>Tipo</th>
+                <th>Modalidad</th>
                 <th>% Aplica</th>
+                <th>Monto</th>
                 <th class="text-end">Orden</th>
                 <th class="text-end">Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="conceptos.length === 0">
-                <td colspan="6" class="text-center text-muted py-4">Sin conceptos.</td>
+                <td colspan="8" class="text-center text-muted py-4">Sin conceptos.</td>
               </tr>
               <tr v-for="c in conceptos" :key="c.id">
                 <td><code>{{ c.codigo }}</code></td>
@@ -57,10 +59,25 @@
                   <span class="badge" :class="badgeTipo(c.tipo)">{{ c.tipo }}</span>
                 </td>
                 <td>
+                  <span v-if="c.tipo === 'DESCUENTO'" class="badge" :class="c.tipoDescuento === 'FIJO' ? 'bg-primary' : 'bg-secondary'">
+                    {{ c.tipoDescuento || '—' }}
+                  </span>
+                  <span v-else class="text-muted">—</span>
+                </td>
+                <td>
                   <span v-if="c.aplicaPorcentaje" class="badge bg-primary">
                     {{ (Number(c.porcentaje) * 100).toFixed(2) }}%
                   </span>
                   <span v-else class="text-muted">No</span>
+                </td>
+                <td>
+                  <span v-if="c.tipo === 'DESCUENTO' && c.tipoDescuento === 'FIJO'">
+                    {{ fmtNumero(c.monto) }}
+                  </span>
+                  <span v-else-if="c.tipo === 'DESCUENTO' && c.tipoDescuento === 'VARIABLE'" class="text-muted">
+                    Por empleado
+                  </span>
+                  <span v-else class="text-muted">—</span>
                 </td>
                 <td class="text-end">{{ c.orden }}</td>
                 <td class="text-end">
@@ -107,6 +124,18 @@
                 <label class="form-label">Orden</label>
                 <input v-model="form.orden" type="number" class="form-control" />
               </div>
+              <div class="col-md-6" v-if="form.tipo === 'DESCUENTO'">
+                <label class="form-label">Tipo de descuento</label>
+                <select v-model="form.tipoDescuento" class="form-select">
+                  <option :value="null">—</option>
+                  <option value="FIJO">FIJO (mismo monto para todos)</option>
+                  <option value="VARIABLE">VARIABLE (por empleado)</option>
+                </select>
+              </div>
+              <div class="col-md-6" v-if="form.tipo === 'DESCUENTO' && form.tipoDescuento === 'FIJO'">
+                <label class="form-label">Monto fijo (Bs)</label>
+                <input v-model="form.monto" type="number" step="0.01" min="0" class="form-control" />
+              </div>
               <div class="col-md-6">
                 <label class="form-label">Aplica porcentaje</label>
                 <select v-model="form.aplicaPorcentaje" class="form-select">
@@ -127,6 +156,8 @@
             </div>
             <p class="text-muted small mb-0">
               El porcentaje se almacena en forma decimal. Ej.: 10% se guarda como 0.10.
+              Para los descuentos, el tipo FIJO aplica un monto igual a todos y el tipo VARIABLE
+              se configura por empleado en el módulo "Descuentos Empleados".
             </p>
           </div>
           <div class="modal-footer">
@@ -159,6 +190,8 @@ const form = reactive({
   tipo: 'HABER',
   aplicaPorcentaje: false,
   porcentaje: null,
+  tipoDescuento: null,
+  monto: null,
   orden: 0
 })
 
@@ -167,6 +200,11 @@ let modal = null
 function mostrarAlerta(texto, tipo) {
   alerta.value = { texto, tipo }
   setTimeout(() => (alerta.value = null), 4000)
+}
+
+function fmtNumero(v) {
+  if (v === null || v === undefined) return '-'
+  return Number(v).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 function badgeTipo(tipo) {
@@ -196,7 +234,8 @@ function cambiarTipo(tipo) {
 function nuevo() {
   Object.assign(form, {
     id: null, codigo: '', nombre: '', tipo: tipoFiltro.value || 'HABER',
-    aplicaPorcentaje: false, porcentaje: null, orden: 0
+    aplicaPorcentaje: false, porcentaje: null,
+    tipoDescuento: null, monto: null, orden: 0
   })
   modal.show()
 }
@@ -214,6 +253,12 @@ async function guardar() {
       payload.porcentaje = Number(payload.porcentaje) / 100
     } else {
       payload.porcentaje = null
+    }
+    if (payload.tipo !== 'DESCUENTO') {
+      payload.tipoDescuento = null
+      payload.monto = null
+    } else if (payload.tipoDescuento !== 'FIJO') {
+      payload.monto = null
     }
     if (form.id) {
       await api.put(`/conceptos/${form.id}`, payload)
