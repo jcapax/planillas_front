@@ -1,0 +1,52 @@
+@page planilla-completa {
+  size: letter landscape;
+  margin: 0.15in;
+}
+
+@media print {
+  .planilla-print {
+    page: planilla-completa;
+  }
+
+  .planilla-tabla {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 4.5pt;
+    font-family: Arial, sans-serif;
+    color: #000;
+  }
+
+  .planilla-tabla thead {
+    display: table-header-group;
+  }
+
+  .planilla-tabla th,
+  .planilla-tabla td {
+    border: 1px solid #000;
+    padding: 1px 1px;
+    text-align: right;
+    white-space: normal !important;
+    overflow-wrap: break-word;
+  }
+
+  .planilla-tabla th {
+    background: #eceff3;
+    font-size: 4pt;
+    text-align: center;
+    font-weight: 700;
+  }
+
+  .planilla-tabla .izq {
+    text-align: left;
+  }
+
+  .planilla-tabla td.firma {
+    height: 24pt;
+  }
+
+  .planilla-tabla tbody tr,
+  .planilla-tabla tfoot tr {
+    break-inside: avoid;
+  }
+}

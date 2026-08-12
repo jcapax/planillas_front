@@ -70,6 +70,16 @@
               <i class="bi bi-file-earmark-spreadsheet"></i>Gestión de Planillas
             </router-link>
           </li>
+          <li class="nav-item">
+            <router-link class="nav-link" :class="{ active: ruta === 'papeletas' }" to="/papeletas">
+              <i class="bi bi-printer"></i>Papeletas de Pago
+            </router-link>
+          </li>
+          <li class="nav-item">
+            <router-link class="nav-link" :class="{ active: ruta === 'planilla-imprimir' }" to="/planilla-imprimir">
+              <i class="bi bi-table"></i>Imprimir Planilla
+            </router-link>
+          </li>
         </ul>
       </div>
 

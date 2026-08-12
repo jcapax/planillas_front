@@ -56,3 +56,55 @@ body {
   justify-content: center;
   background: linear-gradient(135deg, var(--ss-secondary), var(--ss-primary));
 }
+
+/* ==========================================================================
+   Impresión de papeletas de pago (media hoja carta: 8.5 x 5.5 pulgadas)
+   ========================================================================== */
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 0;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  .no-print,
+  .sidebar,
+  .ss-navbar {
+    display: none !important;
+  }
+
+  .p-3,
+  .p-md-4 {
+    padding: 0 !important;
+  }
+
+  .papeletas-print {
+    display: block !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  .papeleta {
+    width: 8.5in !important;
+    height: 5.5in !important;
+    max-width: none !important;
+    max-height: 5.5in !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0.35in 0.4in 0.3in !important;
+    box-sizing: border-box;
+    border: none;
+    overflow: hidden;
+    page-break-after: auto;
+    page-break-inside: avoid;
+  }
+
+  /* Dos papeletas por hoja carta: tras cada 2ª papeleta se inicia página nueva */
+  .papeletas-print .papeleta:nth-child(2n) {
+    page-break-after: always;
+  }
+}
+

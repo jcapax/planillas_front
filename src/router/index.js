@@ -29,7 +29,9 @@ const routes = [
           { path: 'descuentos-empleados', name: 'descuentos-empleados', component: () => import('../views/config/DescuentosEmpleadosView.vue') }
         ]
       },
-      { path: 'planillas', name: 'planillas', component: () => import('../views/PlanillasView.vue') }
+      { path: 'planillas', name: 'planillas', component: () => import('../views/PlanillasView.vue') },
+      { path: 'papeletas', name: 'papeletas', component: () => import('../views/PapeletasView.vue') },
+      { path: 'planilla-imprimir', name: 'planilla-imprimir', component: () => import('../views/PlanillaImpresionView.vue') }
     ]
   },
   { path: '/:pathMatch(.*)*', redirect: '/dashboard' }
