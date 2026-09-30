@@ -3,8 +3,8 @@
     <nav class="navbar navbar-dark ss-navbar px-3">
       <span class="navbar-brand d-flex align-items-center gap-2 mb-0">
         <i class="bi bi-clipboard2-pulse"></i>
-        <span class="fw-bold">Sucre Sureña</span>
-        <span class="badge bg-warning text-dark ms-1">Planillas</span>
+        <span class="fw-bold">Servicios Profesionales del Sur</span>
+        <span class="badge bg-warning text-dark ms-1">SPS</span>
       </span>
       <div class="d-flex align-items-center gap-3">
         <span class="text-white-50 small d-none d-md-inline">

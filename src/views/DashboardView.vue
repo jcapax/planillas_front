@@ -45,14 +45,11 @@
       <div class="card-header">Sobre el sistema</div>
       <div class="card-body">
         <p>
-          Sistema informático para el control de planillas salariales de la empresa
-          <strong>Sucre Sureña</strong>, diseñado a partir del análisis de la hoja
-          <em>"auxiliar"</em> de la planilla de haberes (Julio 2026).
+          
         </p>
         <p class="mb-0">
-          Para comenzar, complete la <router-link to="/configuracion/empresa">configuración básica</router-link>:
-          datos de la empresa, registro de empleados, parámetros de aportes, tabla de bono de
-          antigüedad y conceptos de haberes/descuentos.
+          Iniciar en <router-link to="/configuracion/empresa">configuración básica</router-link>
+          
         </p>
       </div>
     </div>

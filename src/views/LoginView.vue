@@ -4,8 +4,8 @@
       <div class="card-body p-5">
         <div class="text-center mb-4">
           <i class="bi bi-clipboard2-pulse display-4 text-primary"></i>
-          <h2 class="mt-3 mb-0 fw-bold">Sucre Sureña</h2>
-          <p class="text-muted">Control de Planillas Salariales</p>
+          <h2 class="mt-3 mb-0 fw-bold">SIDS S.A.</h2>
+          <p class="text-muted">Control de Personal</p>
         </div>
 
         <form @submit.prevent="submit">
@@ -41,7 +41,7 @@
         </form>
 
         <p class="text-muted small text-center mt-4 mb-0">
-          Usuario por defecto: <code>admin</code> / <code>admin123</code>
+          
         </p>
       </div>
     </div>

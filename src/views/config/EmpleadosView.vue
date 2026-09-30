@@ -38,13 +38,15 @@
                 <th>Cargo</th>
                 <th>F. Ingreso</th>
                 <th>Jornal Hora</th>
+                <th>Hrs. Trab.</th>
                 <th>Sexo</th>
+                <th>Cuenta bancaria</th>
                 <th class="text-end">Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="!cargando && empleados.length === 0">
-                <td colspan="8" class="text-center text-muted py-4">
+                <td colspan="10" class="text-center text-muted py-4">
                   No se encontraron empleados.
                 </td>
               </tr>
@@ -56,9 +58,11 @@
                 </td>
                 <td>{{ nombreCompleto(emp) }}</td>
                 <td>{{ emp.cargo || '-' }}</td>
-                <td>{{ emp.fechaIngreso || '-' }}</td>
+                <td>{{ fmtFecha(emp.fechaIngreso) || '-' }}</td>
                 <td class="text-end">{{ fmtNumero(emp.jornalHora) }}</td>
+                <td class="text-end">{{ fmtNumero(emp.horasTrabajadas) }}</td>
                 <td>{{ emp.persona.sexo || '-' }}</td>
+                <td>{{ emp.cuentaBancaria || '-' }}</td>
                 <td class="text-end">
                   <button class="btn btn-sm btn-outline-primary me-1" @click="editar(emp)">
                     <i class="bi bi-pencil"></i>
@@ -146,14 +150,16 @@
                 <label class="form-label">Clasificación laboral</label>
                 <input v-model="form.clasificacionLaboral" class="form-control" />
               </div>
-              <div class="col-md-2">
-                <label class="form-label">Fecha de ingreso</label>
-                <input v-model="form.fechaIngreso" type="date" class="form-control" />
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Fecha de seguro</label>
-                <input v-model="form.fechaSeguro" type="date" class="form-control" />
-              </div>
+<div class="col-md-3">
+                 <label class="form-label">Fecha de ingreso</label>
+                 <input v-model="form.fechaIngreso" type="date" class="form-control" />
+                 <div class="text-muted small" v-if="form.fechaIngreso">{{ fmtFecha(form.fechaIngreso) }}</div>
+               </div>
+               <div class="col-md-3">
+                 <label class="form-label">Fecha de seguro</label>
+                 <input v-model="form.fechaSeguro" type="date" class="form-control" />
+                 <div class="text-muted small" v-if="form.fechaSeguro">{{ fmtFecha(form.fechaSeguro) }}</div>
+               </div>
               <div class="col-md-3">
                 <label class="form-label">Origen / Extensión</label>
                 <select v-model="form.origen" class="form-select">
@@ -169,6 +175,10 @@
               <div class="col-md-3">
                 <label class="form-label">NUA/CUA</label>
                 <input v-model="form.nuaCua" class="form-control" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Cuenta bancaria</label>
+                <input v-model="form.cuentaBancaria" class="form-control" placeholder="Nro de cuenta BEC" />
               </div>
               <div class="col-md-3">
                 <label class="form-label">AFP</label>
@@ -189,6 +199,10 @@
               <div class="col-md-3">
                 <label class="form-label">Jornal hora (Bs) *</label>
                 <input v-model="form.jornalHora" type="number" step="0.01" min="0" class="form-control" required />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Horas trabajadas *</label>
+                <input v-model="form.horasTrabajadas" type="number" step="0.01" min="0" class="form-control" required />
               </div>
             </div>
           </div>
@@ -226,6 +240,7 @@ const empleadoVacio = () => ({
   personaId: null,
   afp: 'Gestora',
   nuaCua: '',
+  cuentaBancaria: '',
   fechaIngreso: '',
   fechaSeguro: '',
   origen: 'CH',
@@ -233,6 +248,7 @@ const empleadoVacio = () => ({
   clasificacionLaboral: '',
   jubilado: false,
   jornalHora: 0,
+  horasTrabajadas: 208,
   persona: { tipoDocumento: 'CI', nroDocumento: '' }
 })
 
@@ -264,6 +280,13 @@ function nombreCompleto(emp) {
 function fmtNumero(v) {
   if (v === null || v === undefined) return '-'
   return Number(v).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function fmtFecha(s) {
+  if (!s) return ''
+  const [y, m, d] = String(s).split('-')
+  if (!y || !m || !d) return s
+  return `${d}/${m}/${y}`
 }
 
 async function cargar(p) {
@@ -302,6 +325,7 @@ function nuevo() {
 
 function editar(emp) {
   Object.assign(form, empleadoVacio(), emp)
+  if (form.horasTrabajadas === null || form.horasTrabajadas === undefined) form.horasTrabajadas = 208
   modal.show()
 }
 

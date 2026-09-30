@@ -1,7 +1,7 @@
 {
   "name": "sucre-surena-frontend",
   "version": "1.0.0",
-  "description": "Frontend del sistema de control de planillas - Sucre Sureña",
+  "description": "Frontend del sistema de control de planillas",
   "private": true,
   "type": "module",
   "scripts": {
