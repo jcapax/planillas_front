@@ -204,6 +204,16 @@
                 <label class="form-label">Horas trabajadas *</label>
                 <input v-model="form.horasTrabajadas" type="number" step="0.01" min="0" class="form-control" required />
               </div>
+              <div class="col-md-3">
+                <label class="form-label">Haber básico (Bs)</label>
+                <input v-model="form.haberBasico" type="number" step="0.01" min="0" class="form-control" />
+                <small class="text-muted"></small>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Mín. nacional</label>
+                <input :value="fmtNumero(config.minimoNacional)" class="form-control" readonly disabled />
+                <small class="text-muted"></small>
+              </div>
             </div>
           </div>
           <div class="modal-footer">
@@ -234,6 +244,7 @@ const pagina = ref(1)
 const totalPaginas = ref(0)
 const totalElementos = ref(0)
 const alerta = ref(null)
+const config = ref({ minimoNacional: 0, cantidadMinimoNacional: 1 })
 
 const empleadoVacio = () => ({
   id: null,
@@ -249,6 +260,7 @@ const empleadoVacio = () => ({
   jubilado: false,
   jornalHora: 0,
   horasTrabajadas: 208,
+  haberBasico: null,
   persona: { tipoDocumento: 'CI', nroDocumento: '' }
 })
 
@@ -362,9 +374,19 @@ async function eliminar(emp) {
   }
 }
 
+async function cargarConfig() {
+  try {
+    const { data } = await api.get('/configuracion')
+    config.value = data
+  } catch (e) {
+    // sin configuración disponible: se usan los valores por defecto
+  }
+}
+
 onMounted(() => {
   modal = new Modal(document.getElementById('modalEmpleado'))
   cargar(0)
   cargarDisponibles()
+  cargarConfig()
 })
 </script>

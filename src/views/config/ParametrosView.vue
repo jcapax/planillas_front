@@ -9,6 +9,34 @@
 
     <div v-if="alerta" class="alert" :class="alerta.tipo">{{ alerta.texto }}</div>
 
+    <div class="card shadow-sm border-0 mb-3">
+      <div class="card-header">
+        <i class="bi bi-sliders me-2"></i>Configuración del bono de antigüedad
+      </div>
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label">Mínimo nacional (Bs) *</label>
+            <input v-model.number="config.minimoNacional" type="number" step="0.01" min="0" class="form-control" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Cantidad de mínimos *</label>
+            <input v-model.number="config.cantidadMinimoNacional" type="number" step="0.01" min="0.01" class="form-control" />
+          </div>
+          <div class="col-md-4 d-grid">
+            <button class="btn btn-primary" :disabled="guardandoConfig" @click="guardarConfig">
+              <span v-if="guardandoConfig" class="spinner-border spinner-border-sm me-1"></span>
+              Guardar configuración
+            </button>
+          </div>
+        </div>
+        <p class="text-muted small mt-2 mb-0">
+          El bono de antigüedad se calcula al generar la planilla como:
+          <strong>mínimo nacional × cantidad de mínimos × % bono por antigüedad</strong>.
+        </p>
+      </div>
+    </div>
+
     <div class="card shadow-sm border-0">
       <div class="card-header">Parámetros</div>
       <div class="card-body">
@@ -110,7 +138,13 @@ import api, { mensajeError } from '../../services/api'
 
 const parametros = ref([])
 const guardando = ref(false)
+const guardandoConfig = ref(false)
 const alerta = ref(null)
+
+const config = reactive({
+  minimoNacional: 0,
+  cantidadMinimoNacional: 1
+})
 
 const form = reactive({
   id: null,
@@ -134,6 +168,41 @@ async function cargar() {
     parametros.value = data
   } catch (e) {
     mostrarAlerta(mensajeError(e), 'alert-danger')
+  }
+}
+
+async function cargarConfig() {
+  try {
+    const { data } = await api.get('/configuracion')
+    config.minimoNacional = Number(data.minimoNacional)
+    config.cantidadMinimoNacional = Number(data.cantidadMinimoNacional)
+  } catch (e) {
+    mostrarAlerta(mensajeError(e), 'alert-danger')
+  }
+}
+
+async function guardarConfig() {
+  if (config.minimoNacional < 0) {
+    mostrarAlerta('El mínimo nacional no puede ser negativo', 'alert-warning')
+    return
+  }
+  if (!config.cantidadMinimoNacional || config.cantidadMinimoNacional <= 0) {
+    mostrarAlerta('La cantidad de mínimos debe ser mayor a cero', 'alert-warning')
+    return
+  }
+  guardandoConfig.value = true
+  try {
+    const { data } = await api.put('/configuracion', {
+      minimoNacional: config.minimoNacional,
+      cantidadMinimoNacional: config.cantidadMinimoNacional
+    })
+    config.minimoNacional = Number(data.minimoNacional)
+    config.cantidadMinimoNacional = Number(data.cantidadMinimoNacional)
+    mostrarAlerta('Configuración guardada', 'alert-success')
+  } catch (e) {
+    mostrarAlerta(mensajeError(e), 'alert-danger')
+  } finally {
+    guardandoConfig.value = false
   }
 }
 
@@ -181,5 +250,6 @@ async function eliminar(p) {
 onMounted(() => {
   modal = new Modal(document.getElementById('modalParametro'))
   cargar()
+  cargarConfig()
 })
 </script>

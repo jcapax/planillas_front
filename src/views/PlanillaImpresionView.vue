@@ -19,7 +19,11 @@
               </option>
             </select>
           </div>
-          <div class="col-md-7 d-flex align-items-end justify-content-end">
+          <div class="col-md-7 d-flex align-items-end justify-content-end gap-2">
+            <button class="btn btn-success" :disabled="detalles.length === 0 || generandoPdf" @click="generarPdf">
+              <span v-if="generandoPdf" class="spinner-border spinner-border-sm me-1"></span>
+              <i v-else class="bi bi-file-earmark-pdf me-1"></i>Generar PDF
+            </button>
             <button class="btn btn-primary" :disabled="detalles.length === 0" @click="imprimir">
               <i class="bi bi-printer me-1"></i>Imprimir
             </button>
@@ -166,6 +170,7 @@ const planillaId = ref(null)
 const planillaActual = ref(null)
 const detalles = ref([])
 const alerta = ref(null)
+const generandoPdf = ref(false)
 
 function mostrarAlerta(texto, tipo) {
   alerta.value = { texto, tipo }
@@ -271,6 +276,42 @@ function imprimir() {
     return
   }
   window.print()
+}
+
+async function generarPdf() {
+  if (detalles.value.length === 0 || generandoPdf.value) return
+  generandoPdf.value = true
+  try {
+    const { data } = await api.get(`/planillas/${planillaId.value}/pdf`, { responseType: 'blob' })
+    const url = URL.createObjectURL(data)
+    const enlace = document.createElement('a')
+    enlace.href = url
+    enlace.download = nombreArchivoPdf()
+    document.body.appendChild(enlace)
+    enlace.click()
+    enlace.remove()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    if (e.response && e.response.data instanceof Blob) {
+      try {
+        const texto = JSON.parse(await e.response.data.text())
+        mostrarAlerta(texto.error || 'No se pudo generar el PDF', 'alert-danger')
+      } catch {
+        mostrarAlerta('No se pudo generar el PDF', 'alert-danger')
+      }
+    } else {
+      mostrarAlerta(mensajeError(e), 'alert-danger')
+    }
+  } finally {
+    generandoPdf.value = false
+  }
+}
+
+function nombreArchivoPdf() {
+  const p = planillaActual.value
+  if (!p) return 'planilla.pdf'
+  const mes = meses[((p.periodoMes || 1) - 1) % 12].toLowerCase()
+  return `planilla_${mes}_${p.periodoAnio}.pdf`
 }
 
 onMounted(cargarPlanillas)

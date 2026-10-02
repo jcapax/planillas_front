@@ -53,7 +53,7 @@ import api, { mensajeError } from '../../services/api'
 
 const form = reactive({
   id: null,
-  nombre: 'Sociedad Industrial del Sur S.A.',
+  nombre: 'Servicios Profesionales del Sur SRL',
   nit: '',
   cnss: '',
   zona: '',
