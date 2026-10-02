@@ -21,6 +21,7 @@ const routes = [
         children: [
           { path: '', redirect: '/configuracion/empresa' },
           { path: 'empresa', name: 'empresa', component: () => import('../views/config/EmpresaView.vue') },
+          { path: 'general', name: 'general', component: () => import('../views/config/ConfiguracionGeneralView.vue') },
           { path: 'personas', name: 'personas', component: () => import('../views/config/PersonasView.vue') },
           { path: 'empleados', name: 'empleados', component: () => import('../views/config/EmpleadosView.vue') },
           { path: 'parametros', name: 'parametros', component: () => import('../views/config/ParametrosView.vue') },

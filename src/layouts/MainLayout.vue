@@ -33,6 +33,11 @@
             </router-link>
           </li>
           <li class="nav-item">
+            <router-link class="nav-link" :class="{ active: ruta === 'general' }" to="/configuracion/general">
+              <i class="bi bi-gear"></i>Configuración General
+            </router-link>
+          </li>
+          <li class="nav-item">
             <router-link class="nav-link" :class="{ active: ruta === 'personas' }" to="/configuracion/personas">
               <i class="bi bi-person-vcard"></i>Personas
             </router-link>
