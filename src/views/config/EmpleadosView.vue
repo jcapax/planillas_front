@@ -197,6 +197,13 @@
                 </select>
               </div>
               <div class="col-md-3">
+                <label class="form-label">Sindicato</label>
+                <select v-model="form.sindicato" class="form-select">
+                  <option :value="false">No</option>
+                  <option :value="true">Sí</option>
+                </select>
+              </div>
+              <div class="col-md-3">
                 <label class="form-label">Jornal hora (Bs) *</label>
                 <input v-model="form.jornalHora" type="number" step="0.01" min="0" class="form-control" required />
               </div>
@@ -258,6 +265,7 @@ const empleadoVacio = () => ({
   cargo: '',
   clasificacionLaboral: '',
   jubilado: false,
+  sindicato: false,
   jornalHora: 0,
   horasTrabajadas: 208,
   haberBasico: null,

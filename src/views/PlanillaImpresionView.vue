@@ -55,7 +55,6 @@
             <col style="width: 3%" />
             <col style="width: 4.5%" />
             <col style="width: 2%" />
-            <col style="width: 3.5%" />
             <col style="width: 4.5%" />
             <col style="width: 6%" />
             <col style="width: 6%" />
@@ -68,6 +67,7 @@
             <col style="width: 4%" />
             <col style="width: 3%" />
             <col style="width: 4.5%" />
+            <col style="width: 2.5%" />
             <col style="width: 4.5%" />
             <col style="width: 4.5%" />
             <col style="width: 4.5%" />
@@ -84,7 +84,6 @@
               <th>Tipo Doc.</th>
               <th>Nº Documento</th>
               <th>Ext.</th>
-              <th>AFP</th>
               <th>NUA/CUA</th>
               <th>Apellido Paterno</th>
               <th>Apellido Materno</th>
@@ -97,6 +96,7 @@
               <th>F. Ingreso</th>
               <th>Horas</th>
               <th>Haber Básico</th>
+              <th>% Bono Ant.</th>
               <th>Bono Antig.</th>
               <th>Otros Bonos</th>
               <th>Total Ganado</th>
@@ -113,7 +113,6 @@
               <td>{{ f.tipoDoc }}</td>
               <td>{{ f.nroDoc }}</td>
               <td>{{ f.ext }}</td>
-              <td class="izq">{{ f.afp }}</td>
               <td>{{ f.nua }}</td>
               <td class="izq">{{ f.apPat }}</td>
               <td class="izq">{{ f.apMat }}</td>
@@ -126,6 +125,7 @@
               <td>{{ f.fing }}</td>
               <td>{{ f.horas }}</td>
               <td>{{ f.haber }}</td>
+              <td>{{ f.bonoPct }}</td>
               <td>{{ f.bono }}</td>
               <td>{{ f.otros }}</td>
               <td>{{ f.totalGan }}</td>
@@ -138,9 +138,10 @@
           </tbody>
           <tfoot>
             <tr class="pp-totales">
-              <td colspan="15" class="izq fw-bold">TOTALES</td>
+              <td colspan="14" class="izq fw-bold">TOTALES</td>
               <td class="fw-bold">{{ totales.horas }}</td>
               <td class="fw-bold">{{ totales.haber }}</td>
+              <td></td>
               <td class="fw-bold">{{ totales.bono }}</td>
               <td class="fw-bold">{{ totales.otros }}</td>
               <td class="fw-bold">{{ totales.totalGan }}</td>
@@ -182,6 +183,11 @@ function fmtNum(v) {
   return Number(v).toFixed(2)
 }
 
+function fmtPct(v) {
+  if (v === null || v === undefined) return '0.00%'
+  return (Number(v) * 100).toFixed(2) + '%'
+}
+
 function fmtFecha(s) {
   if (!s) return ''
   const [y, m, d] = String(s).split('-')
@@ -204,7 +210,6 @@ const filas = computed(() =>
       tipoDoc: per.tipoDocumento,
       nroDoc: per.nroDocumento,
       ext: emp.origen,
-      afp: emp.afp,
       nua: emp.nuaCua,
       apPat: per.apellidoPaterno,
       apMat: per.apellidoMaterno,
@@ -217,6 +222,7 @@ const filas = computed(() =>
       fing: fmtFecha(emp.fechaIngreso),
       horas: fmtNum(d.horasTrabajadas),
       haber: fmtNum(d.haberBasico),
+      bonoPct: fmtPct(d.bonoAntigPct),
       bono: fmtNum(d.bonoAntigMonto),
       otros: fmtNum(d.salarioDominical),
       totalGan: fmtNum(d.totalGanado),
