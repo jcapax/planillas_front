@@ -492,7 +492,7 @@ async function recalcular(p) {
     cargar()
     if (detallePlanillaId.value === p.id) {
       const { data: det } = await api.get(`/planillas/${p.id}/detalles`)
-      detalles.value = det
+      detalles.value = [...det].sort((a, b) => (a.item ?? 0) - (b.item ?? 0))
     }
   } catch (e) {
     mostrarAlerta(mensajeError(e), 'alert-danger')
@@ -511,7 +511,7 @@ async function verDetalles(p) {
   detallePlanillaId.value = p.id
   try {
     const { data } = await api.get(`/planillas/${p.id}/detalles`)
-    detalles.value = data
+    detalles.value = [...data].sort((a, b) => (a.item ?? 0) - (b.item ?? 0))
   } catch (e) {
     mostrarAlerta(mensajeError(e), 'alert-danger')
   }
@@ -588,7 +588,7 @@ async function cargarMatrizPlanilla() {
         montos[k] = Number(v) || 0
       }
       return { ...f, montos }
-    })
+    }).sort((a, b) => (a.item ?? 0) - (b.item ?? 0))
   } catch (e) {
     mostrarAlerta(mensajeError(e), 'alert-danger')
   } finally {

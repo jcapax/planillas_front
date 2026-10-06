@@ -1,16 +1,17 @@
 @page planilla-completa {
-  size: letter landscape;
-  margin: 0.15in;
+  size: 33cm 21cm;
+  margin: 0.4cm 0.4cm 0.4cm 0.7cm;
 }
 
 @media print {
   .planilla-print {
     page: planilla-completa;
+    margin: 0;
   }
 
   .planilla-tabla {
     width: 100%;
-    table-layout: fixed;
+    table-layout: auto;
     border-collapse: collapse;
     font-size: 4.5pt;
     font-family: Arial, sans-serif;
@@ -24,10 +25,9 @@
   .planilla-tabla th,
   .planilla-tabla td {
     border: 1px solid #000;
-    padding: 1px 1px;
+    padding: 3pt 2pt;
     text-align: right;
-    white-space: normal !important;
-    overflow-wrap: break-word;
+    white-space: nowrap;
   }
 
   .planilla-tabla th {
@@ -35,6 +35,7 @@
     font-size: 4pt;
     text-align: center;
     font-weight: 700;
+    white-space: normal;
   }
 
   .planilla-tabla .izq {
@@ -42,7 +43,7 @@
   }
 
   .planilla-tabla td.firma {
-    height: 24pt;
+    height: 1cm;
   }
 
   .planilla-tabla tbody tr,

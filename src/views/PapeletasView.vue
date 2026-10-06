@@ -34,6 +34,13 @@
           </div>
         </div>
 
+        <div class="form-check form-switch mt-3">
+          <input id="formatoV2" v-model="formatoV2" class="form-check-input" type="checkbox" />
+          <label class="form-check-label" for="formatoV2">
+            Diseño V2: haberes y descuentos en columnas
+          </label>
+        </div>
+
         <div v-if="planillaId && papeletas.length > 0" class="mt-3">
           <label class="form-label">Empleados ({{ papeletas.length }})</label>
           <div class="papeleta-lista">
@@ -65,7 +72,7 @@
       <h6 class="text-muted"><i class="bi bi-eye me-1"></i>Vista previa</h6>
     </div>
 
-    <div class="papeletas-print">
+    <div class="papeletas-print" :class="{ 'papeletas-v2': formatoV2 }">
       <div v-for="p in seleccionadas" :key="p.detalleId" class="papeleta">
         <div class="ph-cabecera">
           <div class="ph-empresa">{{ (planillaActual.empresa && planillaActual.empresa.nombre) || 'SIDS S.A.' }}</div>
@@ -94,34 +101,71 @@
           </div>
         </div>
 
-        <div class="ph-lineas">
-          <div class="ph-linea ph-linea-cabecera">
-            <span>DESCRIPCION</span>
-            <span>HABERES</span>
-            <span>DESCUENTOS</span>
-          </div>
-          <div v-for="l in p.lineas" :key="l.codigo" class="ph-linea">
-            <span class="ph-desc">{{ l.nombre }}</span>
-            <span>{{ l.tipo === 'HABER' ? fmt(l.monto) : '' }}</span>
-            <span>{{ l.tipo !== 'HABER' ? fmt(l.monto) : '' }}</span>
-          </div>
-          <div class="ph-linea ph-total-hd">
-            <span>TOTAL HABERES Y DESCUENTOS</span>
-            <span>{{ fmt(p.totalGanado) }}</span>
-            <span>{{ fmt(p.totalDescuentos) }}</span>
-          </div>
-          <div class="ph-linea ph-total-lq">
-            <span>SALDO CREDITO / LIQUIDO PAGABLE</span>
-            <span></span>
-            <span>{{ fmt(p.liquidoPagable) }}</span>
-          </div>
+        <div class="ph-lineas" :class="{ 'ph-lineas-v2': formatoV2 }">
+          <template v-if="formatoV2">
+            <div class="ph-col">
+              <div class="ph-col-cabecera">
+                <span>HABERES</span>
+                <span>MONTO</span>
+              </div>
+              <div v-for="l in haberesDe(p)" :key="l.codigo" class="ph-fila">
+                <span class="ph-desc">{{ l.nombre }}</span>
+                <span>{{ fmt(l.monto) }}</span>
+              </div>
+            </div>
+            <div class="ph-col">
+              <div class="ph-col-cabecera">
+                <span>DESCUENTOS</span>
+                <span>MONTO</span>
+              </div>
+              <div v-for="l in descuentosDe(p)" :key="l.codigo" class="ph-fila">
+                <span class="ph-desc">{{ l.nombre }}</span>
+                <span>{{ fmt(l.monto) }}</span>
+              </div>
+            </div>
+            <div class="ph-total-v2">
+              <div class="ph-total-fila">
+                <span>TOTAL HABERES</span>
+                <span>{{ fmt(p.totalGanado) }}</span>
+              </div>
+              <div class="ph-total-fila">
+                <span>TOTAL DESCUENTOS</span>
+                <span>{{ fmt(p.totalDescuentos) }}</span>
+              </div>
+              <div class="ph-total-fila ph-total-lq">
+                <span>SALDO CREDITO / LIQUIDO PAGABLE</span>
+                <span>{{ fmt(p.liquidoPagable) }}</span>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <div class="ph-linea ph-linea-cabecera">
+              <span>DESCRIPCION</span>
+              <span>HABERES</span>
+              <span>DESCUENTOS</span>
+            </div>
+            <div v-for="l in p.lineas" :key="l.codigo" class="ph-linea">
+              <span class="ph-desc">{{ l.nombre }}</span>
+              <span>{{ l.tipo === 'HABER' ? fmt(l.monto) : '' }}</span>
+              <span>{{ l.tipo !== 'HABER' ? fmt(l.monto) : '' }}</span>
+            </div>
+            <div class="ph-linea ph-total-hd">
+              <span>TOTAL HABERES Y DESCUENTOS</span>
+              <span>{{ fmt(p.totalGanado) }}</span>
+              <span>{{ fmt(p.totalDescuentos) }}</span>
+            </div>
+            <div class="ph-linea ph-total-lq">
+              <span>SALDO CREDITO / LIQUIDO PAGABLE</span>
+              <span></span>
+              <span>{{ fmt(p.liquidoPagable) }}</span>
+            </div>
+          </template>
         </div>
 
         <div class="ph-nota">** revise su liquidación **</div>
         <div class="ph-firma">
           <span>RECIBI CONFORME</span>
-          <span class="ph-firma-linea"></span>
-          <span class="ph-firma-fecha">FECHA: __________________</span>
+          <span class="ph-firma-linea"></span>          
         </div>
       </div>
     </div>
@@ -139,6 +183,7 @@ const papeletas = ref([])
 const catalogo = ref([])
 const seleccion = ref([])
 const alerta = ref(null)
+const formatoV2 = ref(false)
 
 function mostrarAlerta(texto, tipo) {
   alerta.value = { texto, tipo }
@@ -183,7 +228,7 @@ async function cargarPapeletas() {
   try {
     const { data } = await api.get(`/planillas/${planillaId.value}/papeletas`)
     planillaActual.value = data.planilla || { empresa: {} }
-    papeletas.value = data.papeletas || []
+    papeletas.value = (data.papeletas || []).slice().sort((a, b) => (a.item ?? 0) - (b.item ?? 0))
   } catch (e) {
     mostrarAlerta(mensajeError(e), 'alert-danger')
   }
@@ -198,6 +243,14 @@ function construirLineas(p) {
     tipo: c.tipo,
     monto: porCodigo[c.codigo] ?? 0
   }))
+}
+
+function haberesDe(p) {
+  return p.lineas.filter((l) => l.tipo === 'HABER')
+}
+
+function descuentosDe(p) {
+  return p.lineas.filter((l) => l.tipo !== 'HABER')
 }
 
 const seleccionadas = computed(() =>
@@ -263,10 +316,12 @@ onMounted(() => {
   width: 100%;
   background: #fff;
   border: 1px solid #b9c1cc;
-  padding: 0.4in;
+  padding: 0.3in calc(0.4in + 0.8cm) 0.25in;
   margin-bottom: 1.5rem;
   font-family: 'Arial', sans-serif;
   color: #000;
+  display: flex;
+  flex-direction: column;
 }
 
 .ph-cabecera {
@@ -343,6 +398,18 @@ onMounted(() => {
 .ph-lineas {
   display: grid;
   grid-template-columns: 1fr;
+  align-content: start;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ph-cabecera,
+.ph-empleado,
+.ph-resumen,
+.ph-nota,
+.ph-firma {
+  flex-shrink: 0;
 }
 
 .ph-linea {
@@ -375,6 +442,62 @@ onMounted(() => {
   background: #eee;
 }
 
+.ph-lineas-v2 {
+  grid-template-columns: 1fr 1fr;
+  column-gap: 10px;
+}
+
+.ph-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.ph-col-cabecera {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 7pt;
+  padding-bottom: 2px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid #000;
+}
+
+.ph-fila {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  font-size: 7.5pt;
+  line-height: 1.2;
+  padding: 0.5px 0;
+  border-bottom: 0.5px dotted #888;
+}
+
+.ph-fila .ph-desc {
+  text-align: left;
+}
+
+.ph-fila > :last-child,
+.ph-col-cabecera > :last-child,
+.ph-total-fila > :last-child {
+  text-align: right;
+}
+
+.ph-total-v2 {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  border-top: 1px solid #000;
+}
+
+.ph-total-fila {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  font-size: 7.5pt;
+  font-weight: 700;
+  padding: 1px 0;
+}
+
 .ph-nota {
   text-align: center;
   font-size: 6.5pt;
@@ -386,7 +509,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 4px;
+  margin-top: auto;
+  padding-top: 6px;
   font-size: 7pt;
   font-weight: 700;
 }

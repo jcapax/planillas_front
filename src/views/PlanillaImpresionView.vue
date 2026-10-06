@@ -38,7 +38,7 @@
     <div v-if="detalles.length > 0" class="planilla-print">
       <div class="pp-empresa">
         <div class="pp-l1">{{ (planillaActual.empresa && planillaActual.empresa.nombre) || '' }}</div>
-        <div>CNSS {{ (planillaActual.empresa && planillaActual.empresa.cnss) || '' }}</div>
+        <div>SEGURO UNIVERSITARIO {{ (planillaActual.empresa && planillaActual.empresa.cnss) || '' }}</div>
         <div>NIT {{ (planillaActual.empresa && planillaActual.empresa.nit) || '' }}</div>
         <div>Zona: {{ (planillaActual.empresa && planillaActual.empresa.zona) || '' }}</div>
         <div>Calle: {{ (planillaActual.empresa && planillaActual.empresa.calle) || '' }}</div>
@@ -96,7 +96,6 @@
               <th>F. Ingreso</th>
               <th>Horas</th>
               <th>Haber Básico</th>
-              <th>% Bono Ant.</th>
               <th>Bono Antig.</th>
               <th>Otros Bonos</th>
               <th>Total Ganado</th>
@@ -108,8 +107,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="f in filas" :key="f.item">
-              <td>{{ f.item }}</td>
+            <tr v-for="(f, index) in filas" :key="f.item">
+              <td>{{ index + 1 }}</td>
               <td>{{ f.tipoDoc }}</td>
               <td>{{ f.nroDoc }}</td>
               <td>{{ f.ext }}</td>
@@ -125,7 +124,6 @@
               <td>{{ f.fing }}</td>
               <td>{{ f.horas }}</td>
               <td>{{ f.haber }}</td>
-              <td>{{ f.bonoPct }}</td>
               <td>{{ f.bono }}</td>
               <td>{{ f.otros }}</td>
               <td>{{ f.totalGan }}</td>
@@ -138,10 +136,8 @@
           </tbody>
           <tfoot>
             <tr class="pp-totales">
-              <td colspan="14" class="izq fw-bold">TOTALES</td>
-              <td class="fw-bold">{{ totales.horas }}</td>
+              <td colspan="15" class="izq fw-bold">TOTALES</td>              
               <td class="fw-bold">{{ totales.haber }}</td>
-              <td></td>
               <td class="fw-bold">{{ totales.bono }}</td>
               <td class="fw-bold">{{ totales.otros }}</td>
               <td class="fw-bold">{{ totales.totalGan }}</td>
@@ -178,9 +174,10 @@ function mostrarAlerta(texto, tipo) {
   setTimeout(() => (alerta.value = null), 5000)
 }
 
+const formatoNumero = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 function fmtNum(v) {
   if (v === null || v === undefined) return '0.00'
-  return Number(v).toFixed(2)
+  return formatoNumero.format(Number(v) || 0)
 }
 
 function fmtPct(v) {
@@ -202,7 +199,7 @@ const titulo = computed(() => {
 })
 
 const filas = computed(() =>
-  detalles.value.map((d) => {
+  [...detalles.value].sort((a, b) => (a.item ?? 0) - (b.item ?? 0)).map((d) => {
     const per = (d.empleado && d.empleado.persona) || {}
     const emp = d.empleado || {}
     return {
@@ -222,7 +219,6 @@ const filas = computed(() =>
       fing: fmtFecha(emp.fechaIngreso),
       horas: fmtNum(d.horasTrabajadas),
       haber: fmtNum(d.haberBasico),
-      bonoPct: fmtPct(d.bonoAntigPct),
       bono: fmtNum(d.bonoAntigMonto),
       otros: fmtNum(d.salarioDominical),
       totalGan: fmtNum(d.totalGanado),
@@ -270,18 +266,14 @@ async function cargarPlanilla() {
       api.get(`/planillas/${planillaId.value}/detalles`)
     ])
     planillaActual.value = p.data
-    detalles.value = d.data
+    detalles.value = [...d.data].sort((a, b) => (a.item ?? 0) - (b.item ?? 0))
   } catch (e) {
     mostrarAlerta(mensajeError(e), 'alert-danger')
   }
 }
 
 function imprimir() {
-  if (detalles.value.length === 0) {
-    mostrarAlerta('La planilla no tiene datos para imprimir', 'alert-warning')
-    return
-  }
-  window.print()
+  generarPdf()
 }
 
 async function generarPdf() {
@@ -372,7 +364,7 @@ onMounted(cargarPlanillas)
 }
 
 .planilla-tabla td.firma {
-  height: 18px;
+  height: 1cm;
 }
 
 .planilla-tabla tbody tr:nth-child(even) {

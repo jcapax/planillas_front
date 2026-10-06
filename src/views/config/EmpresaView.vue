@@ -22,7 +22,7 @@
             <input v-model="form.nit" class="form-control" />
           </div>
           <div class="col-md-4">
-            <label class="form-label">CNSS</label>
+            <label class="form-label">Seguro</label>
             <input v-model="form.cnss" class="form-control" />
           </div>
           <div class="col-md-4">
