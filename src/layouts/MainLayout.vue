@@ -85,6 +85,16 @@
               <i class="bi bi-table"></i>Imprimir Planilla
             </router-link>
           </li>
+          <li class="nav-item">
+            <router-link class="nav-link" :class="{ active: ruta === 'planilla-descuentos' }" to="/planilla-descuentos">
+              <i class="bi bi-cash-stack"></i>Planilla de Descuentos
+            </router-link>
+          </li>
+          <li class="nav-item">
+            <router-link class="nav-link" :class="{ active: ruta === 'copiar-descuentos' }" to="/copiar-descuentos">
+              <i class="bi bi-clipboard-data"></i>Copiar Descuentos
+            </router-link>
+          </li>
         </ul>
       </div>
 

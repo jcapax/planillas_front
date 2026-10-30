@@ -32,7 +32,9 @@ const routes = [
       },
       { path: 'planillas', name: 'planillas', component: () => import('../views/PlanillasView.vue') },
       { path: 'papeletas', name: 'papeletas', component: () => import('../views/PapeletasView.vue') },
-      { path: 'planilla-imprimir', name: 'planilla-imprimir', component: () => import('../views/PlanillaImpresionView.vue') }
+      { path: 'planilla-imprimir', name: 'planilla-imprimir', component: () => import('../views/PlanillaImpresionView.vue') },
+      { path: 'planilla-descuentos', name: 'planilla-descuentos', component: () => import('../views/PlanillaDescuentosView.vue') },
+      { path: 'copiar-descuentos', name: 'copiar-descuentos', component: () => import('../views/CopiarDescuentosView.vue') }
     ]
   },
   { path: '/:pathMatch(.*)*', redirect: '/dashboard' }

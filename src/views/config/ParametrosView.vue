@@ -31,8 +31,7 @@
           </div>
         </div>
         <p class="text-muted small mt-2 mb-0">
-          El bono de antigüedad se calcula al generar la planilla como:
-          <strong>mínimo nacional × cantidad de mínimos × % bono por antigüedad</strong>.
+          
         </p>
       </div>
     </div>
