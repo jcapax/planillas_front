@@ -62,25 +62,36 @@
                   </span>
                 </td>
                 <td class="text-end">
-                  <button class="btn btn-sm btn-outline-success me-1" @click="generar(p)">
+                  <button
+                    class="btn btn-sm btn-outline-success me-1"
+                    :disabled="p.estado === 'CERRADA'"
+                    @click="generar(p)"
+                    :title="p.estado === 'CERRADA' ? 'Planilla cerrada: no se puede modificar' : ''"
+                  >
                     <i class="bi bi-calculator me-1"></i>Generar
                   </button>
                   <button
-                    class="btn btn-sm btn-outline-info me-1"
-                    :disabled="recalculandoId === p.id"
-                    @click="recalcular(p)"
-                    title="Volver a calcular total aportes, descuentos varios, total descuentos y líquido pagable"
+                    v-if="p.estado !== 'CERRADA'"
+                    class="btn btn-sm btn-outline-secondary me-1"
+                    :disabled="cerrandoId === p.id"
+                    @click="cerrar(p)"
+                    title="Cerrar planilla: sus registros quedan bloqueados y solo se podrá imprimir"
                   >
-                    <span v-if="recalculandoId === p.id" class="spinner-border spinner-border-sm me-1"></span>
-                    <i v-else class="bi bi-arrow-repeat me-1"></i>Recalcular
+                    <span v-if="cerrandoId === p.id" class="spinner-border spinner-border-sm me-1"></span>
+                    <i v-else class="bi bi-lock me-1"></i>Cerrar
                   </button>
                   <button class="btn btn-sm btn-outline-primary me-1" @click="verDetalles(p)" title="Ver detalle">
                     <i class="bi bi-list-ol"></i>
                   </button>
-                  <button class="btn btn-sm btn-outline-warning me-1" @click="abrirMatriz(p)" title="Registro masivo de descuentos (tabla Excel)">
-                    <i class="bi bi-table me-1"></i>Matriz
+                  <button class="btn btn-sm btn-outline-dark me-1" @click="imprimir(p)" title="Imprimir planilla">
+                    <i class="bi bi-printer me-1"></i>Imprimir
                   </button>
-                  <button class="btn btn-sm btn-outline-danger" @click="eliminar(p)">
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    :disabled="p.estado === 'CERRADA'"
+                    @click="eliminar(p)"
+                    :title="p.estado === 'CERRADA' ? 'Planilla cerrada: no se puede eliminar' : ''"
+                  >
                     <i class="bi bi-trash"></i>
                   </button>
                 </td>
@@ -98,11 +109,14 @@
           <div class="modal-header">
             <h5 class="modal-title">Detalles: {{ detalleActual }}</h5>
             <div class="d-flex gap-2 align-items-center">
-              <button v-if="detallePlanillaId" type="button" class="btn btn-sm btn-info" :disabled="recalculandoId === detallePlanillaId" @click="recalcularDesdeDetalle">
+              <span v-if="detallePlanillaCerrada" class="badge bg-success">
+                <i class="bi bi-lock me-1"></i>Cerrada (solo lectura)
+              </span>
+              <button v-if="detallePlanillaId" type="button" class="btn btn-sm btn-info" :disabled="detallePlanillaCerrada || recalculandoId === detallePlanillaId" @click="recalcularDesdeDetalle">
                 <span v-if="recalculandoId === detallePlanillaId" class="spinner-border spinner-border-sm me-1"></span>
                 <i v-else class="bi bi-arrow-repeat me-1"></i>Recalcular
               </button>
-              <button v-if="detallePlanillaId" type="button" class="btn btn-sm btn-warning" @click="abrirMatrizDesdeDetalle">
+              <button v-if="detallePlanillaId" type="button" class="btn btn-sm btn-warning" :disabled="detallePlanillaCerrada" @click="abrirMatrizDesdeDetalle">
                 <i class="bi bi-table me-1"></i>Registro masivo (Excel)
               </button>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -146,7 +160,12 @@
                     <td class="text-end">{{ fmt(d.totalDescuentos) }}</td>
                     <td class="text-end fw-bold">{{ fmt(d.liquidoPagable) }}</td>
                     <td class="text-end">
-                      <button class="btn btn-sm btn-outline-warning" @click="abrirDescuentos(d)">
+                      <button
+                        class="btn btn-sm btn-outline-warning"
+                        :disabled="detallePlanillaCerrada"
+                        :title="detallePlanillaCerrada ? 'Planilla cerrada: no se puede modificar' : ''"
+                        @click="abrirDescuentos(d)"
+                      >
                         <i class="bi bi-pencil-square me-1"></i>Dctos.
                       </button>
                     </td>
@@ -334,8 +353,11 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { Modal } from 'bootstrap'
 import api, { mensajeError } from '../services/api'
+
+const router = useRouter()
 
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
@@ -346,9 +368,11 @@ const nuevaMes = ref(7)
 const nuevaAnio = ref(new Date().getFullYear())
 const creando = ref(false)
 const recalculandoId = ref(null)
+const cerrandoId = ref(null)
 const alerta = ref(null)
 const detalleActual = ref('')
 const detallePlanillaId = ref(null)
+const detallePlanillaCerrada = ref(false)
 const detalleSeleccionado = ref(null)
 const detalleDescuentoEmpleado = ref('')
 const detalleDescuentos = ref([])
@@ -509,6 +533,7 @@ function recalcularDesdeDetalle() {
 async function verDetalles(p) {
   detalleActual.value = p.nombre
   detallePlanillaId.value = p.id
+  detallePlanillaCerrada.value = estadoPlanilla(p) === 'CERRADA'
   try {
     const { data } = await api.get(`/planillas/${p.id}/detalles`)
     detalles.value = [...data].sort((a, b) => (a.item ?? 0) - (b.item ?? 0))
@@ -516,6 +541,35 @@ async function verDetalles(p) {
     mostrarAlerta(mensajeError(e), 'alert-danger')
   }
   modalDetalles.show()
+}
+
+function estadoPlanilla(p) {
+  if (!p) return null
+  if (p.estado) return p.estado
+  return planillas.value.find((x) => x.id === p.id)?.estado ?? null
+}
+
+async function cerrar(p) {
+  const ok = confirm(
+    `¿Cerrar la planilla "${p.nombre}"? Sus registros quedarán bloqueados: no se podrá generar, ` +
+    'editar descuentos ni eliminar. Solo se podrá imprimir.'
+  )
+  if (!ok) return
+  cerrandoId.value = p.id
+  try {
+    await api.post(`/planillas/${p.id}/cerrar`)
+    mostrarAlerta('Planilla cerrada: registros bloqueados', 'alert-success')
+    if (detallePlanillaId.value === p.id) detallePlanillaCerrada.value = true
+    await cargar()
+  } catch (e) {
+    mostrarAlerta(mensajeError(e), 'alert-danger')
+  } finally {
+    cerrandoId.value = null
+  }
+}
+
+function imprimir(p) {
+  router.push({ path: '/planilla-imprimir', query: { planilla: p.id } })
 }
 
 async function abrirDescuentos(d) {

@@ -11,7 +11,7 @@
 
     <div class="card shadow-sm border-0 mb-3">
       <div class="card-header">
-        <i class="bi bi-sliders me-2"></i>Configuración del bono de antigüedad
+        <i class="bi bi-sliders me-2"></i>Configuración del sistema
       </div>
       <div class="card-body">
         <div class="row g-3 align-items-end">
@@ -23,16 +23,29 @@
             <label class="form-label">Cantidad de mínimos *</label>
             <input v-model.number="config.cantidadMinimoNacional" type="number" step="0.01" min="0.01" class="form-control" />
           </div>
+          <div class="col-md-4">
+            <label class="form-label">Edad a partir de la cual aplica el porcentaje especial</label>
+            <input v-model.number="config.edadRiesgoComun" type="number" step="1" min="0" class="form-control" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Porcentaje de riesgo común para esa edad</label>
+            <input v-model.number="config.edadRiesgoComunPct" type="number" step="0.0001" min="0" class="form-control" />
+          </div>
           <div class="col-md-4 d-grid">
             <button class="btn btn-primary" :disabled="guardandoConfig" @click="guardarConfig">
               <span v-if="guardandoConfig" class="spinner-border spinner-border-sm me-1"></span>
               Guardar configuración
             </button>
           </div>
+          <div class="col-12">
+            <p class="text-muted small mb-0">
+              <strong>Riesgo común por edad:</strong> si un empleado tiene una edad igual o superior a la indicada
+              <strong>y</strong> tiene el registro "Trámite AFP" en Sí, el concepto AFP_2_21 se calcula con este
+              porcentaje en lugar de la tasa normal de riesgo común. Si el empleado tiene "Trámite AFP" en No,
+              siempre se le aplica la tasa normal de riesgo común, sin importar su edad.
+            </p>
+          </div>
         </div>
-        <p class="text-muted small mt-2 mb-0">
-          
-        </p>
       </div>
     </div>
 
@@ -142,7 +155,9 @@ const alerta = ref(null)
 
 const config = reactive({
   minimoNacional: 0,
-  cantidadMinimoNacional: 1
+  cantidadMinimoNacional: 1,
+  edadRiesgoComun: null,
+  edadRiesgoComunPct: null
 })
 
 const form = reactive({
@@ -175,6 +190,8 @@ async function cargarConfig() {
     const { data } = await api.get('/configuracion')
     config.minimoNacional = Number(data.minimoNacional)
     config.cantidadMinimoNacional = Number(data.cantidadMinimoNacional)
+    config.edadRiesgoComun = data.edadRiesgoComun ?? null
+    config.edadRiesgoComunPct = data.edadRiesgoComunPct ?? null
   } catch (e) {
     mostrarAlerta(mensajeError(e), 'alert-danger')
   }
@@ -189,14 +206,30 @@ async function guardarConfig() {
     mostrarAlerta('La cantidad de mínimos debe ser mayor a cero', 'alert-warning')
     return
   }
+  if (config.edadRiesgoComun !== null && config.edadRiesgoComun !== ''
+      && Number(config.edadRiesgoComun) < 0) {
+    mostrarAlerta('La edad de riesgo común no puede ser negativa', 'alert-warning')
+    return
+  }
+  if (config.edadRiesgoComunPct !== null && config.edadRiesgoComunPct !== ''
+      && Number(config.edadRiesgoComunPct) < 0) {
+    mostrarAlerta('El porcentaje de riesgo común no puede ser negativo', 'alert-warning')
+    return
+  }
   guardandoConfig.value = true
   try {
     const { data } = await api.put('/configuracion', {
       minimoNacional: config.minimoNacional,
-      cantidadMinimoNacional: config.cantidadMinimoNacional
+      cantidadMinimoNacional: config.cantidadMinimoNacional,
+      edadRiesgoComun: config.edadRiesgoComun === null || config.edadRiesgoComun === ''
+        ? null : Number(config.edadRiesgoComun),
+      edadRiesgoComunPct: config.edadRiesgoComunPct === null || config.edadRiesgoComunPct === ''
+        ? null : Number(config.edadRiesgoComunPct)
     })
     config.minimoNacional = Number(data.minimoNacional)
     config.cantidadMinimoNacional = Number(data.cantidadMinimoNacional)
+    config.edadRiesgoComun = data.edadRiesgoComun ?? null
+    config.edadRiesgoComunPct = data.edadRiesgoComunPct ?? null
     mostrarAlerta('Configuración guardada', 'alert-success')
   } catch (e) {
     mostrarAlerta(mensajeError(e), 'alert-danger')

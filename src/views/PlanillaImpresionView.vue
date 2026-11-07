@@ -155,9 +155,12 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import api, { mensajeError } from '../services/api'
 import '../assets/print-planilla.css'
+
+const route = useRoute()
 
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
@@ -251,9 +254,18 @@ async function cargarPlanillas() {
   try {
     const { data } = await api.get('/planillas')
     planillas.value = data
+    await seleccionarDeRuta()
   } catch (e) {
     mostrarAlerta(mensajeError(e), 'alert-danger')
   }
+}
+
+async function seleccionarDeRuta() {
+  const id = Number(route.query.planilla)
+  if (!id || !planillas.value.some((p) => p.id === id)) return
+  if (planillaId.value === id) return
+  planillaId.value = id
+  await cargarPlanilla()
 }
 
 async function cargarPlanilla() {
@@ -313,6 +325,7 @@ function nombreArchivoPdf() {
 }
 
 onMounted(cargarPlanillas)
+watch(() => route.query.planilla, seleccionarDeRuta)
 </script>
 
 <style scoped>

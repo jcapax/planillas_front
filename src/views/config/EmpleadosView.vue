@@ -32,7 +32,7 @@
           <table class="table table-hover align-middle">
             <thead>
               <tr>
-                <th>#</th>
+                <th>Ítem</th>
                 <th>Documento</th>
                 <th>Apellidos y Nombres</th>
                 <th>Cargo</th>
@@ -51,7 +51,7 @@
                 </td>
               </tr>
               <tr v-for="(emp, i) in empleados" :key="emp.id">
-                <td>{{ (pagina - 1) * 10 + i + 1 }}</td>
+                <td>{{ emp.item ?? '-' }}</td>
                 <td>
                   {{ emp.persona.tipoDocumento }} {{ emp.persona.nroDocumento }}
                   <span v-if="emp.origen" class="text-muted small">({{ emp.origen }})</span>
@@ -142,6 +142,11 @@
 
             <h6 class="text-primary">Datos laborales</h6>
             <div class="row g-3 mb-3">
+              <div class="col-md-3">
+                <label class="form-label">Ítem</label>
+                <input v-model.number="form.item" type="number" min="1" class="form-control" placeholder="Automático" />
+                <small class="text-muted">Vacío = siguiente número</small>
+              </div>
               <div class="col-md-4">
                 <label class="form-label">Cargo</label>
                 <input v-model="form.cargo" class="form-control" />
@@ -204,6 +209,13 @@
                 </select>
               </div>
               <div class="col-md-3">
+                <label class="form-label">Trámite AFP</label>
+                <select v-model="form.tramiteAfp" class="form-select">
+                  <option :value="false">No</option>
+                  <option :value="true">Sí</option>
+                </select>
+              </div>
+              <div class="col-md-3">
                 <label class="form-label">Jornal hora (Bs) *</label>
                 <input v-model="form.jornalHora" type="number" step="0.01" min="0" class="form-control" required />
               </div>
@@ -256,6 +268,7 @@ const config = ref({ minimoNacional: 0, cantidadMinimoNacional: 1 })
 const empleadoVacio = () => ({
   id: null,
   personaId: null,
+  item: null,
   afp: 'Gestora',
   nuaCua: '',
   cuentaBancaria: '',
@@ -266,6 +279,7 @@ const empleadoVacio = () => ({
   clasificacionLaboral: '',
   jubilado: false,
   sindicato: false,
+  tramiteAfp: false,
   jornalHora: 0,
   horasTrabajadas: 208,
   haberBasico: null,
@@ -354,6 +368,7 @@ async function guardar() {
     mostrarAlerta('Seleccione una persona', 'alert-warning')
     return
   }
+  if (form.item === '' || form.item === undefined) form.item = null
   guardando.value = true
   try {
     if (form.id) {
